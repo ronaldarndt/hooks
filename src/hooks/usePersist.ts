@@ -1,9 +1,12 @@
 import { useEffect, useRef, useState } from 'react';
 import { UsePersist } from '../lib/types';
+import useEventListener from './useEventListener';
 
 function usePersist<T>(init: T, key: string): UsePersist<T> {
   const [state, setState] = useState(init);
   const stateRef = useRef(state);
+
+  useEventListener('beforeunload', handleUnload);
 
   useEffect(() => {
     stateRef.current = state;
@@ -13,14 +16,8 @@ function usePersist<T>(init: T, key: string): UsePersist<T> {
     const value = localStorage.getItem(key);
 
     if (value) {
-      const v = JSON.parse(value);
-
-      setState(v as T);
+      setState(JSON.parse(value) as T);
     }
-
-    window.addEventListener('beforeunload', handleUnload);
-
-    return () => window.removeEventListener('beforeunload', handleUnload);
   }, []);
 
   function handleUnload() {
@@ -28,7 +25,6 @@ function usePersist<T>(init: T, key: string): UsePersist<T> {
   }
 
   function setStorage(value: T) {
-    console.log(value);
     localStorage.setItem(key, JSON.stringify(value));
   }
 
